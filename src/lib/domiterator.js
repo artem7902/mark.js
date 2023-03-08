@@ -102,7 +102,7 @@ class DOMIterator {
       filteredCtx = [];
     if (typeof this.ctx === 'undefined' || !this.ctx) { // e.g. null
       ctx = [];
-    } else if (NodeList.prototype.isPrototypeOf(this.ctx)) {
+    } else if (Object.prototype.isPrototypeOf.call(NodeList, this.ctx)) {
       ctx = Array.prototype.slice.call(this.ctx);
     } else if (Array.isArray(this.ctx)) {
       ctx = this.ctx;

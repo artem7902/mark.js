@@ -96,7 +96,10 @@ module.exports = config => {
   };
   config.set({
     basePath: '../',
-    frameworks: ['jasmine-jquery', 'jasmine'],
+    frameworks: [
+      //'jasmine-jquery'
+      ,
+       'jasmine'],
     files: [
       'node_modules/jquery/dist/jquery.min.js',
       'dist/!(*.es6|*.min).js',
@@ -137,7 +140,7 @@ module.exports = config => {
     failOnEmptyTestSuite: false,
     plugins: [
       'karma-jasmine',
-      'karma-jasmine-jquery',
+      //'karma-jasmine-jquery',
       'karma-sauce-launcher',
       'karma-summary-reporter',
       'karma-coverage'

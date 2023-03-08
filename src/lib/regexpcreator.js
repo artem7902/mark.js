@@ -170,7 +170,7 @@ class RegExpCreator {
       joinerPlaceholder = this.opt.ignoreJoiners ||
       this.opt.ignorePunctuation.length ? '\u0000' : '';
     for (let index in syn) {
-      if (syn.hasOwnProperty(index)) {
+      if (Object.prototype.hasOwnProperty.call(syn, index)) {
         let keys = Array.isArray(syn[index]) ? syn[index] : [syn[index]];
         keys.unshift(index);
         keys = this.sortByLength(keys).map(key => {

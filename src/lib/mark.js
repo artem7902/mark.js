@@ -370,13 +370,28 @@ class Mark {
    * @access protected
    */
   wrapRangeInTextNode(node, start, end) {
+    const { markId }  = this.opt;
     const hEl = !this.opt.element ? 'mark' : this.opt.element,
       startNode = node.splitText(start),
       ret = startNode.splitText(end - start);
     let repl = document.createElement(hEl);
+    repl.setAttribute('id', markId);
     repl.setAttribute('data-markjs', 'true');
     if (this.opt.className) {
       repl.setAttribute('class', this.opt.className);
+    }
+    if (this.callbacks.onClick) {
+      repl.addEventListener('click', e =>
+        this.callbacks.onClick(markId, e));
+    }
+    if (this.callbacks.onMouseOver) {
+      repl.addEventListener('mouseover', e =>
+        this.callbacks.onMouseOver(markId, e));
+    }
+    if (this.callbacks.onMouseLeave) {
+      repl.addEventListener('mouseleave', (e) => 
+        this.callbacks.onMouseLeave(markId, e)
+      );
     }
     repl.textContent = startNode.textContent;
     startNode.parentNode.replaceChild(repl, startNode);
@@ -904,6 +919,7 @@ class Mark {
    */
   markRanges(rawRanges, opt) {
     this.opt = opt;
+    this.opt.markId = `mark-${new Date().getTime()}`;
     let totalMatches = 0,
       ranges = this.checkRanges(rawRanges);
     if (ranges && ranges.length) {
@@ -940,9 +956,75 @@ class Mark {
     if (this.opt.className) {
       sel += `.${this.opt.className}`;
     }
+    if (this.opt.id) {
+      sel += `#${this.opt.id}`;
+    }
     this.log(`Removal selector "${sel}"`);
     this.iterator.forEachNode(NodeFilter.SHOW_ELEMENT, node => {
       this.unwrapMatches(node);
+    }, node => {
+      const matchesSel = DOMIterator.matches(node, sel),
+        matchesExclude = this.matchesExclude(node);
+      if (!matchesSel || matchesExclude) {
+        return NodeFilter.FILTER_REJECT;
+      } else {
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }, this.opt.done);
+  }
+
+  /**
+   * On click callback for each mark.js node
+   * @callback Mark~setEventListenersClickCallback
+   * @param {string} markId - The id of mark.js node
+   * @param {object} e - click event
+   */
+  /**
+   * On mouse over callback for each mark.js node
+   * @callback Mark~setEventListenersMouseOverCallback
+   * @param {string} markId - The id of mark.js node
+   * @param {object} e - mouse over event
+   */
+  /**
+   * On mouse leave callback for each mark.js node
+   * @callback Mark~setEventListenersMouseLeaveCallback
+   * @param {string} markId - The id of mark.js node
+   * @param {object} e - mouse leave event
+   */
+  /**
+   * @typedef Mark~setEventListenersCallbacks
+   * @type {object.<string>}
+   * @property {Mark~setEventListenersClickCallback} [onClick]
+   * @property {Mark~setEventListenersMouseOverCallback} [onMouseOver]
+   * @property {Mark~setEventListenersMouseLeaveCallback} [onMouseLeave]
+   */
+  /**
+   * Sets event listeners for existing and new mark.js nodes
+   * 
+   * @param  {Mark~setEventListenersCallbacks} [callbacks] - Optional options object
+   * @access public
+   */
+  setEventListeners(callbacks, opt) {
+    this.callbacks = callbacks;
+    this.opt = opt;
+    let sel = this.opt.element ? this.opt.element : '*';
+    sel += '[data-markjs]';
+    this.log(`Set event listeners selector "${sel}"`);
+    this.iterator.forEachNode(NodeFilter.SHOW_ELEMENT, node => {
+      const markId = node.getAttribute('id');
+      if (callbacks.onClick) {
+        node.addEventListener('click', e =>
+          callbacks.onClick(markId, e));
+      } 
+      if (callbacks.onMouseOver) {
+        node.addEventListener('mouseover', e =>
+          callbacks.onMouseOver(markId, e));
+      }
+      if (callbacks.onMouseLeave) {
+        node.addEventListener('mouseleave', (e) => 
+          callbacks.onMouseLeave(markId, e)
+        );
+      }
     }, node => {
       const matchesSel = DOMIterator.matches(node, sel),
         matchesExclude = this.matchesExclude(node);

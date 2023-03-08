@@ -18,4 +18,9 @@ $.fn.unmark = function(opt) {
   return this;
 };
 
+$.fn.setEventListeners = function(opt) {
+  new Mark(this.get()).setEventListeners(opt);
+  return this;
+};
+
 export default $;

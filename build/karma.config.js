@@ -1,8 +1,12 @@
 'use strict';
+process.env.CHROME_BIN = require('puppeteer').executablePath()
 module.exports = config => {
   config.set({
     basePath: '../',
-    frameworks: ['jasmine-jquery', 'jasmine'],
+    frameworks: [
+      
+      //'jasmine-jquery', 
+      'jasmine'],
     files: [
       'node_modules/jquery/dist/jquery.min.js',
       'dist/!(*.es6|*.min).js',
@@ -44,12 +48,12 @@ module.exports = config => {
     failOnEmptyTestSuite: false,
     plugins: [
       'karma-jasmine',
-      'karma-jasmine-jquery',
-      'karma-phantomjs-launcher',
+      //'karma-jasmine-jquery',
+      'karma-chrome-launcher',
       'karma-spec-reporter',
       'karma-coverage'
     ],
-    browsers: ['PhantomJS'],
+    browsers: ['ChromeHeadless'],
     captureTimeout: 30000,
     browserNoActivityTimeout: 60000, // 60 sec
     singleRun: true,

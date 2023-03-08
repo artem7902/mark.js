@@ -1,12 +1,19 @@
-import pkg from '../package.json';
+//import pkg from '../package.json';
 import handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import {fileURLToPath} from 'url';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
 import cleanup from 'rollup-plugin-cleanup';
-import babel from 'rollup-plugin-babel';
-import {terser} from "rollup-plugin-terser";
+import babel from '@rollup/plugin-babel';
+import terser from "@rollup/plugin-terser";
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json")))
 
 // Shared config
 const output = {
@@ -56,14 +63,15 @@ const output = {
   pluginsES5 = (() => {
     const newPlugins = plugins.slice();
     newPlugins.push(babel({
+      babelHelpers: 'runtime',
       exclude: 'node_modules/**',
-      'presets': [
+      presets: [
         ['@babel/preset-env', {
           'modules': false
         }]
       ],
-      'plugins': [
-        '@babel/plugin-external-helpers',
+      plugins: [
+        '@babel/plugin-transform-runtime',
         '@babel/plugin-transform-object-assign'
       ]
     }));
@@ -105,7 +113,7 @@ export default [{
 }, {
   input: 'src/vanilla.js',
   output,
-  plugins: pluginsES5
+  plugins: pluginsES5,
 }, {
   input: 'src/jquery.js',
   output: outputJquery,

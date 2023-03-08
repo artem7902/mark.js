@@ -1,15 +1,15 @@
 /*!***************************************************
 * mark.js v9.0.0
 * https://markjs.io/
-* Copyright (c) 2014–2018, Julian Kühnel
+* Copyright (c) 2014–2023, Julian Kühnel
 * Released under the MIT license https://git.io/vwTVl
 *****************************************************/
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global.Mark = factory());
-}(this, (function () { 'use strict';
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Mark = factory());
+})(this, (function () { 'use strict';
 
   class DOMIterator {
     constructor(ctx, iframes = true, exclude = [], iframesTimeout = 5000) {
@@ -47,7 +47,7 @@
         filteredCtx = [];
       if (typeof this.ctx === 'undefined' || !this.ctx) {
         ctx = [];
-      } else if (NodeList.prototype.isPrototypeOf(this.ctx)) {
+      } else if (Object.prototype.isPrototypeOf.call(NodeList, this.ctx)) {
         ctx = Array.prototype.slice.call(this.ctx);
       } else if (Array.isArray(this.ctx)) {
         ctx = this.ctx;
@@ -346,7 +346,7 @@
         joinerPlaceholder = this.opt.ignoreJoiners ||
         this.opt.ignorePunctuation.length ? '\u0000' : '';
       for (let index in syn) {
-        if (syn.hasOwnProperty(index)) {
+        if (Object.prototype.hasOwnProperty.call(syn, index)) {
           let keys = Array.isArray(syn[index]) ? syn[index] : [syn[index]];
           keys.unshift(index);
           keys = this.sortByLength(keys).map(key => {
@@ -475,7 +475,7 @@
     }
   }
 
-  class Mark {
+  let Mark$1 = class Mark {
     constructor(ctx) {
       this.ctx = ctx;
       this.ie = false;
@@ -658,13 +658,28 @@
       ]));
     }
     wrapRangeInTextNode(node, start, end) {
+      const { markId }  = this.opt;
       const hEl = !this.opt.element ? 'mark' : this.opt.element,
         startNode = node.splitText(start),
         ret = startNode.splitText(end - start);
       let repl = document.createElement(hEl);
+      repl.setAttribute('id', markId);
       repl.setAttribute('data-markjs', 'true');
       if (this.opt.className) {
         repl.setAttribute('class', this.opt.className);
+      }
+      if (this.callbacks.onClick) {
+        repl.addEventListener('click', e =>
+          this.callbacks.onClick(markId, e));
+      }
+      if (this.callbacks.onMouseOver) {
+        repl.addEventListener('mouseover', e =>
+          this.callbacks.onMouseOver(markId, e));
+      }
+      if (this.callbacks.onMouseLeave) {
+        repl.addEventListener('mouseleave', (e) =>
+          this.callbacks.onMouseLeave(markId, e)
+        );
       }
       repl.textContent = startNode.textContent;
       startNode.parentNode.replaceChild(repl, startNode);
@@ -727,7 +742,7 @@
             (match = regex.exec(node.textContent)) !== null &&
             match[matchIdx] !== ''
           ) {
-            if (this.opt.separateGroups) {
+            if (this.opt.separateGroups && match.length !== 1){
               node = this.separateGroups(
                 node,
                 match,
@@ -891,6 +906,7 @@
     }
     markRanges(rawRanges, opt) {
       this.opt = opt;
+      this.opt.markId = `mark-${new Date().getTime()}`;
       let totalMatches = 0,
         ranges = this.checkRanges(rawRanges);
       if (ranges && ranges.length) {
@@ -919,6 +935,9 @@
       if (this.opt.className) {
         sel += `.${this.opt.className}`;
       }
+      if (this.opt.id) {
+        sel += `#${this.opt.id}`;
+      }
       this.log(`Removal selector "${sel}"`);
       this.iterator.forEachNode(NodeFilter.SHOW_ELEMENT, node => {
         this.unwrapMatches(node);
@@ -932,10 +951,41 @@
         }
       }, this.opt.done);
     }
-  }
+    setEventListeners(callbacks, opt) {
+      this.callbacks = callbacks;
+      this.opt = opt;
+      let sel = this.opt.element ? this.opt.element : '*';
+      sel += '[data-markjs]';
+      this.log(`Set event listeners selector "${sel}"`);
+      this.iterator.forEachNode(NodeFilter.SHOW_ELEMENT, node => {
+        const markId = node.getAttribute('id');
+        if (callbacks.onClick) {
+          node.addEventListener('click', e =>
+            callbacks.onClick(markId, e));
+        }
+        if (callbacks.onMouseOver) {
+          node.addEventListener('mouseover', e =>
+            callbacks.onMouseOver(markId, e));
+        }
+        if (callbacks.onMouseLeave) {
+          node.addEventListener('mouseleave', (e) =>
+            callbacks.onMouseLeave(markId, e)
+          );
+        }
+      }, node => {
+        const matchesSel = DOMIterator.matches(node, sel),
+          matchesExclude = this.matchesExclude(node);
+        if (!matchesSel || matchesExclude) {
+          return NodeFilter.FILTER_REJECT;
+        } else {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }, this.opt.done);
+    }
+  };
 
-  function Mark$1(ctx) {
-    const instance = new Mark(ctx);
+  function Mark(ctx) {
+    const instance = new Mark$1(ctx);
     this.mark = (sv, opt) => {
       instance.mark(sv, opt);
       return this;
@@ -952,9 +1002,13 @@
       instance.unmark(opt);
       return this;
     };
+    this.setEventListeners = (opt) => {
+      instance.setEventListeners(opt);
+      return this;
+    };
     return this;
   }
 
-  return Mark$1;
+  return Mark;
 
-})));
+}));

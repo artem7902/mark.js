@@ -18,5 +18,9 @@ export default function Mark(ctx) {
     instance.unmark(opt);
     return this;
   };
+  this.setEventListeners = (opt) => {
+    instance.setEventListeners(opt);
+    return this;
+  };
   return this;
 }
