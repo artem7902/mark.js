@@ -776,7 +776,7 @@
       }
     }, {
       key: "wrapRangeInTextNode",
-      value: function wrapRangeInTextNode(node, start, end) {
+      value: function wrapRangeInTextNode(node, start, end, index) {
         var _this4 = this;
         var markId = this.opt.markId;
         var hEl = !this.opt.element ? 'mark' : this.opt.element,
@@ -784,6 +784,7 @@
           ret = startNode.splitText(end - start);
         var repl = document.createElement(hEl);
         repl.setAttribute('id', markId);
+        repl.setAttribute('data-index', String(index));
         repl.setAttribute('data-markjs', 'true');
         if (this.opt.className) {
           repl.setAttribute('class', this.opt.className);
@@ -821,7 +822,7 @@
               e = (end > n.end ? n.end : end) - n.start,
               startStr = dict.value.substr(0, n.start),
               endStr = dict.value.substr(e + n.start);
-            n.node = _this5.wrapRangeInTextNode(n.node, s, e);
+            n.node = _this5.wrapRangeInTextNode(n.node, s, e, i);
             dict.value = startStr + endStr;
             dict.nodes.forEach(function (k, j) {
               if (j >= i) {
@@ -844,8 +845,8 @@
       }
     }, {
       key: "wrapGroups",
-      value: function wrapGroups(node, pos, len, eachCb) {
-        node = this.wrapRangeInTextNode(node, pos, pos + len);
+      value: function wrapGroups(node, pos, len, eachCb, index) {
+        node = this.wrapRangeInTextNode(node, pos, pos + len, index);
         eachCb(node.previousSibling);
         return node;
       }
@@ -856,7 +857,7 @@
         for (var i = 1; i < matchLen; i++) {
           var pos = node.textContent.indexOf(match[i]);
           if (match[i] && pos > -1 && filterCb(match[i], node)) {
-            node = this.wrapGroups(node, pos, match[i].length, eachCb);
+            node = this.wrapGroups(node, pos, match[i].length, eachCb, i);
           }
         }
         return node;
@@ -1067,6 +1068,9 @@
         }
         if (this.opt.id) {
           sel += "#".concat(this.opt.id);
+        }
+        if (this.opt.index) {
+          sel += "[data-index=\"".concat(this.opt.index, "\"]");
         }
         this.log("Removal selector \"".concat(sel, "\""));
         this.iterator.forEachNode(NodeFilter.SHOW_ELEMENT, function (node) {

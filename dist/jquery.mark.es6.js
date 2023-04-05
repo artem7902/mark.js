@@ -657,13 +657,14 @@
         'script', 'style', 'title', 'head', 'html'
       ]));
     }
-    wrapRangeInTextNode(node, start, end) {
+    wrapRangeInTextNode(node, start, end, index) {
       const { markId }  = this.opt;
       const hEl = !this.opt.element ? 'mark' : this.opt.element,
         startNode = node.splitText(start),
         ret = startNode.splitText(end - start);
       let repl = document.createElement(hEl);
       repl.setAttribute('id', markId);
+      repl.setAttribute('data-index', String(index));
       repl.setAttribute('data-markjs', 'true');
       if (this.opt.className) {
         repl.setAttribute('class', this.opt.className);
@@ -696,7 +697,7 @@
             e = (end > n.end ? n.end : end) - n.start,
             startStr = dict.value.substr(0, n.start),
             endStr = dict.value.substr(e + n.start);
-          n.node = this.wrapRangeInTextNode(n.node, s, e);
+          n.node = this.wrapRangeInTextNode(n.node, s, e, i);
           dict.value = startStr + endStr;
           dict.nodes.forEach((k, j) => {
             if (j >= i) {
@@ -717,8 +718,8 @@
         return true;
       });
     }
-    wrapGroups(node, pos, len, eachCb) {
-      node = this.wrapRangeInTextNode(node, pos, pos + len);
+    wrapGroups(node, pos, len, eachCb, index) {
+      node = this.wrapRangeInTextNode(node, pos, pos + len, index);
       eachCb(node.previousSibling);
       return node;
     }
@@ -727,7 +728,7 @@
       for (let i = 1; i < matchLen; i++) {
         let pos = node.textContent.indexOf(match[i]);
         if (match[i] && pos > -1 && filterCb(match[i], node)) {
-          node = this.wrapGroups(node, pos, match[i].length, eachCb);
+          node = this.wrapGroups(node, pos, match[i].length, eachCb, i);
         }
       }
       return node;
@@ -937,6 +938,9 @@
       }
       if (this.opt.id) {
         sel += `#${this.opt.id}`;
+      }
+      if (this.opt.index) {
+        sel += `[data-index="${this.opt.index}"]`;
       }
       this.log(`Removal selector "${sel}"`);
       this.iterator.forEachNode(NodeFilter.SHOW_ELEMENT, node => {
