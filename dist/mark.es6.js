@@ -907,7 +907,9 @@
     }
     markRanges(rawRanges, opt) {
       this.opt = opt;
-      this.opt.markId = `mark-${new Date().getTime()}`;
+      if(!this.opt.markId){
+        this.opt.markId = `mark-${new Date().getTime()}`;
+      }
       let totalMatches = 0,
         ranges = this.checkRanges(rawRanges);
       if (ranges && ranges.length) {

@@ -1039,7 +1039,9 @@
       value: function markRanges(rawRanges, opt) {
         var _this11 = this;
         this.opt = opt;
-        this.opt.markId = "mark-".concat(new Date().getTime());
+        if (!this.opt.markId) {
+          this.opt.markId = "mark-".concat(new Date().getTime());
+        }
         var totalMatches = 0,
           ranges = this.checkRanges(rawRanges);
         if (ranges && ranges.length) {
